@@ -38,10 +38,11 @@ from pyocamcalib.modelling.utils import get_files, generate_checkerboard_points,
 
 class CalibrationEngine:
     def __init__(self,
-                 working_dir: str,
+                 image_working_dir: str,
                  chessboard_size: Tuple[int, int],
                  camera_name: str,
-                 square_size: float = 1):
+                 square_size: float = 1,
+                 working_dir: str = './'):
         """
         :param working_dir: path to folder which contains all chessboard images
         :param chessboard_size: Number of INNER corners per a chessboard (row, column)
@@ -51,8 +52,8 @@ class CalibrationEngine:
         self.rms_overall = None
         self.extrinsics_t_linear = None
         self.taylor_coefficient_linear = None
-        self.working_dir = Path(working_dir)
-        self.images_path = [str(e) for e in get_files(Path(working_dir))]
+        self.image_working_dir = Path(image_working_dir)
+        self.images_path = [str(e) for e in get_files(Path(image_working_dir))]
         self.chessboard_size = chessboard_size
         self.square_size = square_size
         self.sensor_size = cv.imread(str(self.images_path[0])).shape[:2][::-1]
@@ -65,9 +66,10 @@ class CalibrationEngine:
         self.valid_pattern = None
         self.cam_name = camera_name
         self.inverse_poly = None
+        self.working_dir = working_dir
 
     def detect_corners(self, check: bool = False, max_height: int = 520):
-        images_path = get_files(self.working_dir)
+        images_path = get_files(self.image_working_dir)
         count = 0
         world_points = generate_checkerboard_points(self.chessboard_size, self.square_size, z_axis=True)
 
@@ -114,7 +116,7 @@ class CalibrationEngine:
     def save_detection(self):
         now = datetime.now()
         dt_string = now.strftime("%d%m%Y_%H%M%S")
-        with open(f'./../checkpoints/corners_detection/detections_{self.cam_name}_{dt_string}.pickle',
+        with open(f'{self.working_dir}checkpoints/corners_detection/detections_{self.cam_name}_{dt_string}.pickle',
                   'wb') as f:
             pickle.dump(self.detections, f)
 
@@ -207,7 +209,7 @@ class CalibrationEngine:
             world_points_c.append(transform(r, world_points).tolist())
 
         if save:
-            with open('./../checkpoints/chessboard_position.json', 'w') as f:
+            with open(f'{self.working_dir}checkpoints/chessboard_position.json', 'w') as f:
                 json.dump(world_points_c, f, indent=4)
 
         return world_points_c
@@ -223,7 +225,7 @@ class CalibrationEngine:
         plt.title(f'Mean Reprojection Error per Image {self.cam_name}', fontsize=20)
         plt.legend()
         if save:
-            plt.savefig(f"./../../../docs/Mean_reprojection_error_{self.cam_name}.png", dpi=300)
+            plt.savefig(f"{self.working_dir}docs/Mean_reprojection_error_{self.cam_name}.png", dpi=300)
         plt.show()
 
     def show_reprojection(self):
@@ -315,7 +317,7 @@ class CalibrationEngine:
         plt.title(f"Projection model of {self.cam_name}", fontsize=20)
         plt.ylim([0, 1])
         plt.legend()
-        plt.savefig(f"./../../../docs/Model_projection_{self.cam_name}.png", dpi=300)
+        plt.savefig(f"{self.working_dir}docs/Model_projection_{self.cam_name}.png", dpi=300)
         plt.show()
 
         return r_calibrated, theta
@@ -341,7 +343,7 @@ class CalibrationEngine:
                    "rms_std_list": self.rms_std_list
                    }
 
-        with open(f'./../checkpoints/calibration/calibration_{self.cam_name}_{dt_string}.json', 'w') as f:
+        with open(f'{self.working_dir}checkpoints/calibration/calibration_{self.cam_name}_{dt_string}.json', 'w') as f:
             json.dump(outputs, f, indent=4)
 
     def find_poly_inv(self,
