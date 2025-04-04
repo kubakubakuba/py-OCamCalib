@@ -322,11 +322,15 @@ class CalibrationEngine:
 
         return r_calibrated, theta
 
-    def save_calibration(self):
+    def save_calibration(self, filename=None):
         """
         Save calibration results in .json file
         :return: None
         """
+
+        if filename is None:
+            filename = f"calibration_{self.cam_name}_{dt_string}.json"
+
         now = datetime.now()
         dt_string = now.strftime("%d%m%Y_%H%M%S")
         outputs = {"date": dt_string,
@@ -343,7 +347,7 @@ class CalibrationEngine:
                    "rms_std_list": self.rms_std_list
                    }
 
-        with open(f'{self.working_dir}checkpoints/calibration/calibration_{self.cam_name}_{dt_string}.json', 'w') as f:
+        with open(f'{self.working_dir}/{filename}', 'w') as f:
             json.dump(outputs, f, indent=4)
 
     def find_poly_inv(self,
