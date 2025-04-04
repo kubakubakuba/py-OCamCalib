@@ -68,6 +68,10 @@ class CalibrationEngine:
         self.inverse_poly = None
         self.working_dir = working_dir
 
+        #if the working directory does not exist, create it
+        if not Path(working_dir).exists():
+            Path(working_dir).mkdir(parents=True, exist_ok=True)
+
     def detect_corners(self, check: bool = False, max_height: int = 520):
         images_path = get_files(self.image_working_dir)
         count = 0
